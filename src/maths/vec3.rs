@@ -1,11 +1,10 @@
-use std::ops::{Mul, Add};
-
-use sdl2::rect::Point;
+use std::ops::{Mul, Add, Sub};
 
 pub const IDENTITY_X3: Vec3 = Vec3 {x: 1.0, y: 0.0, z: 0.0};
 pub const IDENTITY_Y3: Vec3 = Vec3 {x: 0.0, y: 1.0, z: 0.0};
 pub const IDENTITY_Z3: Vec3 = Vec3 {x: 0.0, y: 0.0, z: 1.0};
 
+#[derive(Clone, Debug)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -33,39 +32,14 @@ impl Vec3 {
     }
 }
 
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
+impl Mul<&Vec3> for f32 {
+    type Output = Vec3;
 
-impl Vec2 {
-    pub fn dot_product(&self, other: &Self) -> f32 {
-        self.x * other.x + self.y * other.y 
-    }
-
-    pub fn len(&self) -> f32 {
-        (self.x * self.x + self.y * self.y).sqrt()
-    }
-
-    pub fn cross_angle(&self, other: &Self) -> f32 {
-        (self.dot_product(other) / (self.len() * other.len())).acos()
-    }
-}
-
-impl From<Vec2> for Point {
-    fn from(value: Vec2) -> Self {
-        Point::new(value.x as i32, value.y as i32)
-    }
-}
-
-impl Mul<f32> for Vec3 {
-    type Output = Self;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
-            z: self.z * rhs,
+    fn mul(self, rhs: &Vec3) -> Self::Output {
+        Vec3 {
+            x: rhs.x * self,
+            y: rhs.y * self,
+            z: rhs.z * self,
         }
     }
 }
@@ -82,13 +56,14 @@ impl Add for Vec3 {
     }
 }
 
-impl Mul<f32> for Vec2 {
+impl Sub for Vec3 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self::Output {
         Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
         }
     }
 }
