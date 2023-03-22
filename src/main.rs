@@ -77,30 +77,29 @@ pub fn main() {
         }
     }
 
-    let mut pos = Point::new(34, 78);
-    let mut pos_mouse = Point::new(300, 300);
+    let pos = Point::new(34, 78);
 
-    let eck1 = Vec3 {
+    let origin = Vec3 {
         x: 0.0,
-        y: 3.0,
+        y: 0.0,
         // z: 6.0,
         z: 0.0,
     };
-    let eck2 = Vec3 {
+    let y_axis = Vec3 {
         x: 0.0,
+        y: 10.0,
+        z: 0.0,
+    };
+    let x_axis = Vec3 {
+        x: 10.0,
         y: 0.0,
         z: 0.0,
     };
-    let eck3 = Vec3 {
+    let z_axis = Vec3 {
         x: 0.0,
-        y: 1000.0,
-        z: 0.0,
-    };
-    let eck4 = Vec3 {
-        x: 2.0,
         y: 0.0,
         // z: 6.0,
-        z: 1.0,
+        z: 10.0,
     };
 
     let mut cam = Camera {
@@ -128,14 +127,14 @@ pub fn main() {
 
     let size = window.size();
     let mut canvas = window.into_canvas().build().unwrap();
-    canvas.set_draw_color(Color::RGB(0, 64, 255));
+    canvas.set_draw_color(Color::WHITE);
     canvas.clear();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut i = 0;
     'running: loop {
-        i = (i + 1) % 255;
-        canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+        // i = (i + 1) % 255;
+        // canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
         canvas.clear();
         for event in event_pump.poll_iter() {
             match event {
@@ -148,44 +147,54 @@ pub fn main() {
                     keycode: Some(Keycode::D),
                     ..
                 } => {
-                    cam.eye.x += SPEED;
+                    cam.eye.y += SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
                     ..
                 } => {
-                    cam.eye.y += SPEED;
+                    cam.eye.x -= SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::W),
                     ..
                 } => {
-                    cam.eye.y -= SPEED;
+                    cam.eye.x += SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
                     ..
                 } => {
-                    cam.eye.x -= SPEED;
+                    cam.eye.y -= SPEED;
                 }
-                Event::MouseMotion { x, y, .. } => pos_mouse = (x, y).into(),
                 _ => {}
             }
         }
         // The rest of the game loop goes here...
-        canvas.set_draw_color(Color::BLACK);
         // canvas.draw_line(pos_mouse, pos).expect("Never error!");
 
-        let pos1 = get_projected(&cam, &eck1, size.0 as f32, size.1 as f32);
-        // let pos2 = get_projected(&cam, &eck2, size.0 as f32, size.1 as f32);
-        // let pos3 = get_projected(&cam, &eck3, size.0 as f32, size.1 as f32);
-        let pos4 = get_projected(&cam, &eck4, size.0 as f32, size.1 as f32);
+        let pos1 = get_projected(&cam, &origin, size.0 as f32, size.1 as f32);
+        let pos2 = get_projected(&cam, &y_axis, size.0 as f32, size.1 as f32);
+        let pos3 = get_projected(&cam, &x_axis, size.0 as f32, size.1 as f32);
+        let pos4 = get_projected(&cam, &z_axis, size.0 as f32, size.1 as f32);
+        println!();
 
         // canvas.draw_line(pos1, pos2).unwrap();
         // canvas.draw_line(pos2, pos3).unwrap();
         // canvas.draw_line(pos3, pos4).unwrap();
+        // Y
+        canvas.set_draw_color(Color::GREEN);
         canvas.draw_line(pos4, pos1).unwrap();
 
+        // X
+        canvas.set_draw_color(Color::BLUE);
+        canvas.draw_line(pos3, pos1).unwrap();
+
+        // Z
+        canvas.set_draw_color(Color::RED);
+        canvas.draw_line(pos2, pos1).unwrap();
+
+        canvas.set_draw_color(Color::WHITE);
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
@@ -195,6 +204,7 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     // atan: zahl -> grad
     // tan: grad -> zahl
     // for testing now disregard z
+    println!("cam pos: {:?}", cam.eye);
     let epvec = &Vec3::from_points(&cam.eye, original);
     let eavec = Vec3::from_points(&cam.eye, &cam.at);
     let alpha = eavec.cross_angle(epvec);
@@ -307,7 +317,7 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     pstrich = Vec3 {
         x: (pstrich.x / (height / 2.0) + 1.0) / 2.0,
         y: (-pstrich.y / (width / 2.0) + 1.0) / 2.0,
-        z: pstrich.z / (cam.far - cam.near),
+        z: pstrich.z / ((cam.far - cam.near) / 2.0),
     };
     println!("{:?}", pstrich);
 
