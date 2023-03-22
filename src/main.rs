@@ -8,6 +8,7 @@ use sdl2::rect::Point;
 use sdl2::sys::{SDL_GL_GetDrawableSize, SDL_GetWindowSize};
 use sdl2::video::FullscreenType;
 use serde::{Deserialize, Serialize};
+use std::f32::consts::PI;
 use std::time::Duration;
 
 mod camera;
@@ -169,14 +170,14 @@ pub fn main() {
         canvas.draw_line(pos_mouse, pos).expect("Never error!");
 
         let pos1 = get_projected(&cam, &eck1);
-        let pos2 = get_projected(&cam, &eck2);
-        let pos3 = get_projected(&cam, &eck3);
-        let pos4 = get_projected(&cam, &eck4);
+        // let pos2 = get_projected(&cam, &eck2);
+        // let pos3 = get_projected(&cam, &eck3);
+        // let pos4 = get_projected(&cam, &eck4);
 
-        canvas.draw_line(pos1, pos2).unwrap();
-        canvas.draw_line(pos2, pos3).unwrap();
-        canvas.draw_line(pos3, pos4).unwrap();
-        canvas.draw_line(pos4, pos1).unwrap();
+        // canvas.draw_line(pos1, pos2).unwrap();
+        // canvas.draw_line(pos2, pos3).unwrap();
+        // canvas.draw_line(pos3, pos4).unwrap();
+        // canvas.draw_line(pos4, pos1).unwrap();
 
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -185,10 +186,30 @@ pub fn main() {
 
 fn get_projected(cam: &Camera, original: &Vec3) -> Point {
     // for testing now disregard z
-    // let distx = (cam.eye.x - original.x).abs();
-    // let disty = (cam.eye.x - original.x).abs();
-    let alpha = Vec3::from_points(&cam.eye, &cam.at).cross_angle(&Vec3::from_points(&cam.eye, original));
-    let length1 = alpha.acos() / cam.near;
-    // println!("{}", );
-    Point::new(cam.near as i32 * 30, length1 as i32 * 30)
+    let epvec = &Vec3::from_points(&cam.eye, original);
+    let eavec = Vec3::from_points(&cam.eye, &cam.at);
+    let alpha = eavec.cross_angle(epvec);
+    // let length1 = alpha.acos() / cam.near;
+    let length1 = cam.near / alpha.cos();
+    let r = length1 / epvec.len();
+    let epstrichvec = epvec * r;
+    let mut pstrich = cam.eye.clone() + epstrichvec.clone();
+    // convert fov to radians
+    let width = 2.0 * cam.near / (cam.fov * PI / 180.0 / 2.0).atan();
+    let height = width / cam.aspect_ratio;
+
+    let r = cam.near / eavec.len();
+    let enstrichvec = eavec * r;
+    let nstrich = cam.eye.clone() + enstrichvec.clone();
+
+    pstrich = pstrich - nstrich;
+
+    // for every one so that n' is at 0,0,0
+
+
+
+    // println!("{:?}", alpha / PI * 180.0);
+    // println!("{:?}", epstrichvec.clone());
+    println!("{:?}", pstrich);
+    Point::new(0, 0)
 }
