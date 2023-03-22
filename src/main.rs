@@ -18,6 +18,7 @@ use maths::vec3::Vec3;
 
 use crate::camera::camera::Camera;
 use crate::maths::mat3x3::Matrix3x3;
+use crate::maths::vec3;
 
 // use log::{debug, error, log_enabled, info, Level};
 
@@ -34,7 +35,7 @@ struct GameConfig {
     fullscreen: bool,
 }
 
-const SPEED: i32 = 5;
+const SPEED: f32 = 0.5;
 
 pub fn main() {
     env_logger::init();
@@ -87,40 +88,45 @@ pub fn main() {
     };
     let eck2 = Vec3 {
         x: 0.0,
-        y: 6.0,
+        y: 0.0,
         z: 0.0,
     };
     let eck3 = Vec3 {
-        x: 4.0,
-        y: 0.0,
+        x: 0.0,
+        y: 1000.0,
         z: 0.0,
     };
     let eck4 = Vec3 {
-        x: 4.0,
+        x: 2.0,
         y: 0.0,
         // z: 6.0,
-        z: 0.0,
+        z: 1.0,
     };
 
-    let cam = Camera {
-        fov: 90.0,
+    let mut cam = Camera {
+        fov: 100.0,
         aspect_ratio: 16.0 / 9.0,
         near: 2.0,
         far: 10.0,
         eye: Vec3 {
-            x: 7.0,
-            y: 7.0,
-            z: 1.0,
+            x: 5.0,
+            y: 5.0,
+            z: 5.0,
         },
         at: Vec3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         },
-        up: crate::maths::vec3::IDENTITY_Y,
+        // ist rechwinklig zu der ebene und zeigt in die obere Mitte
+        up: Vec3 {
+            x: -1.0,
+            y: -1.0,
+            z: 2.0,
+        },
     };
 
-
+    let size = window.size();
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.set_draw_color(Color::RGB(0, 64, 255));
     canvas.clear();
@@ -142,25 +148,25 @@ pub fn main() {
                     keycode: Some(Keycode::D),
                     ..
                 } => {
-                    pos.x += SPEED;
+                    cam.eye.x += SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
                     ..
                 } => {
-                    pos.y += SPEED;
+                    cam.eye.y += SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::W),
                     ..
                 } => {
-                    pos.y -= SPEED;
+                    cam.eye.y -= SPEED;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
                     ..
                 } => {
-                    pos.x -= SPEED;
+                    cam.eye.x -= SPEED;
                 }
                 Event::MouseMotion { x, y, .. } => pos_mouse = (x, y).into(),
                 _ => {}
@@ -168,24 +174,24 @@ pub fn main() {
         }
         // The rest of the game loop goes here...
         canvas.set_draw_color(Color::BLACK);
-        canvas.draw_line(pos_mouse, pos).expect("Never error!");
+        // canvas.draw_line(pos_mouse, pos).expect("Never error!");
 
-        let pos1 = get_projected(&cam, &eck1);
-        // let pos2 = get_projected(&cam, &eck2);
-        // let pos3 = get_projected(&cam, &eck3);
-        // let pos4 = get_projected(&cam, &eck4);
+        let pos1 = get_projected(&cam, &eck1, size.0 as f32, size.1 as f32);
+        // let pos2 = get_projected(&cam, &eck2, size.0 as f32, size.1 as f32);
+        // let pos3 = get_projected(&cam, &eck3, size.0 as f32, size.1 as f32);
+        let pos4 = get_projected(&cam, &eck4, size.0 as f32, size.1 as f32);
 
         // canvas.draw_line(pos1, pos2).unwrap();
         // canvas.draw_line(pos2, pos3).unwrap();
         // canvas.draw_line(pos3, pos4).unwrap();
-        // canvas.draw_line(pos4, pos1).unwrap();
+        canvas.draw_line(pos4, pos1).unwrap();
 
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }
 
-fn get_projected(cam: &Camera, original: &Vec3) -> Point {
+fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: f32) -> Point {
     // atan: zahl -> grad
     // tan: grad -> zahl
     // for testing now disregard z
@@ -197,50 +203,127 @@ fn get_projected(cam: &Camera, original: &Vec3) -> Point {
     let r = length1 / epvec.len();
     let epstrichvec = r * epvec;
     let mut pstrich = &cam.eye + &epstrichvec;
+    // print!("p': {:?}", pstrich);
     // convert fov to radians
-    let width = 2.0 * cam.near / (cam.fov * PI / 360.0).atan();
+    let width = 2.0 * cam.near / (cam.fov * PI / 360.0).tan();
     let height = width / cam.aspect_ratio;
 
     let r = cam.near / eavec.len();
     let enstrichvec = r * &eavec;
     let nstrich = &cam.eye + &enstrichvec;
 
+    let mut up = cam.up.clone();
     // for every one so that n' is at 0,0,0
     pstrich = &pstrich - &nstrich;
     let mut eye_new = &cam.eye - &nstrich;
 
+    // println!(
+    //     " p'': {:?} enew: {:?} n': {:?} up: {:?}",
+    //     pstrich, eye_new, nstrich, up
+    // );
 
     // winkel for rotation around y-axis
     let yalpha = if cam.eye.x == 0.0 {
-        - std::f32::consts::FRAC_PI_2
+        -std::f32::consts::FRAC_PI_2
     } else {
         (eye_new.z / eye_new.x).atan() - std::f32::consts::FRAC_PI_2
     };
-    let yrot = Matrix3x3::new(yalpha.cos(), 0.0, yalpha.sin(), 0.0, 1.0, 0.0, -(yalpha.sin()), 0.0, yalpha.cos());
-    println!("{:?} -> y {:?}", eye_new, yalpha / PI * 180.0);
+    let yrot = Matrix3x3::new(
+        yalpha.cos(),
+        0.0,
+        yalpha.sin(),
+        0.0,
+        1.0,
+        0.0,
+        -(yalpha.sin()),
+        0.0,
+        yalpha.cos(),
+    );
     eye_new = &yrot * &eye_new;
-    println!("{:?}", eye_new);
+    pstrich = &yrot * &pstrich;
+    up = &yrot * &up;
+    // println!(
+    //     "e'': {:?} -> (after y) {:?} p''': {:?} up'': {:?}",
+    //     eye_new,
+    //     yalpha / PI * 180.0,
+    //     pstrich,
+    //     up
+    // );
+    // println!("{:?}", eye_new);
     //
-    let xalpha = if cam.eye.z == 0.0 {
+    let xalpha = if eye_new.z == 0.0 {
         0.0
     } else {
         (eye_new.y / eye_new.z).atan()
     };
-    let xrot = Matrix3x3::new(1.0, 0.0, 0.0, 0.0, xalpha.cos(), -(xalpha.sin()), 0.0, xalpha.sin(), xalpha.cos());
-    println!("{:?} -> x {:?}", eye_new, xalpha / PI * 180.0);
+    let xrot = Matrix3x3::new(
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        xalpha.cos(),
+        -(xalpha.sin()),
+        0.0,
+        xalpha.sin(),
+        xalpha.cos(),
+    );
     eye_new = &xrot * &eye_new;
+    pstrich = &xrot * &pstrich;
+    up = &xrot * &up;
+    // println!(
+    //     "e''': {:?} -> (after x) {:?} p'''': {:?} up''': {:?}",
+    //     eye_new,
+    //     xalpha / PI * 180.0,
+    //     pstrich,
+    //     up
+    // );
 
-    println!("{:?}", eye_new);
+    let zalpha = if up.x > 0.0 {
+        up.cross_angle(&vec3::IDENTITY_Y)
+    } else {
+        -up.cross_angle(&vec3::IDENTITY_Y)
+    };
+    let zrot = Matrix3x3::new(
+        zalpha.cos(),
+        -(zalpha.sin()),
+        0.0,
+        zalpha.sin(),
+        zalpha.cos(),
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    );
+    eye_new = &zrot * &eye_new;
+    pstrich = &zrot * &pstrich;
+    up = &zrot * &up;
+    // println!(
+    //     "(after z) {:?} p'5: {:?} up'''': {:?}",
+    //     zalpha / PI * 180.0,
+    //     pstrich,
+    //     up
+    // );
+
+    pstrich = Vec3 {
+        x: (pstrich.x / (height / 2.0) + 1.0) / 2.0,
+        y: (-pstrich.y / (width / 2.0) + 1.0) / 2.0,
+        z: pstrich.z / (cam.far - cam.near),
+    };
+    println!("{:?}", pstrich);
 
     // TODO NOW
     // - ROTATE AROUND Z ACHISS SO THAT EDGE OF PRJECTION SCREEN Y = 0
+    // - rotate y 180 degreeas => y: -y
+    // - 90 nach links auf z achse => x:
     // - ALL X / WIDTH/2
     // - ALL Y / HEIGHT/2
     // - MOVE Z TO MIDDLE OF NEAR AND FAR && ALL Z / (FAR-NEAR)/2
 
-
     // println!("{:?}", epstrichvec.clone());
     // println!("{:?}", &zrot * &eye_new);
     // println!("{:?} -> {:?}", zalpha / PI * 180.0, eye_new);
-    Point::new(0, 0)
+    Point::new(
+        (pstrich.x * final_width) as i32,
+        (pstrich.y * final_height) as i32,
+    )
 }
