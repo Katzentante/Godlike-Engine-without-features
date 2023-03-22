@@ -110,7 +110,7 @@ pub fn main() {
         eye: Vec3 {
             x: 7.0,
             y: 7.0,
-            z: 1.0,
+            z: 0.0,
         },
         at: Vec3 {
             x: 0.0,
@@ -186,8 +186,6 @@ pub fn main() {
 }
 
 fn get_projected(cam: &Camera, original: &Vec3) -> Point {
-    // atan: zahl -> grad
-    // tan: grad -> zahl
     // for testing now disregard z
     let epvec = &Vec3::from_points(&cam.eye, original);
     let eavec = Vec3::from_points(&cam.eye, &cam.at);
@@ -198,7 +196,7 @@ fn get_projected(cam: &Camera, original: &Vec3) -> Point {
     let epstrichvec = r * epvec;
     let mut pstrich = &cam.eye + &epstrichvec;
     // convert fov to radians
-    let width = 2.0 * cam.near / (cam.fov * PI / 360.0).atan();
+    let width = 2.0 * cam.near / (cam.fov * PI / 180.0 / 2.0).atan();
     let height = width / cam.aspect_ratio;
 
     let r = cam.near / eavec.len();
@@ -207,40 +205,27 @@ fn get_projected(cam: &Camera, original: &Vec3) -> Point {
 
     // for every one so that n' is at 0,0,0
     pstrich = &pstrich - &nstrich;
-    let mut eye_new = &cam.eye - &nstrich;
-
+    let mut eye_new = cam.eye - nstrich;
 
     // winkel for rotation around y-axis
-    let yalpha = if cam.eye.x == 0.0 {
-        - std::f32::consts::FRAC_PI_2
-    } else {
-        (eye_new.z / eye_new.x).atan() - std::f32::consts::FRAC_PI_2
-    };
-    let yrot = Matrix3x3::new(yalpha.cos(), 0.0, yalpha.sin(), 0.0, 1.0, 0.0, -(yalpha.sin()), 0.0, yalpha.cos());
-    println!("{:?} -> y {:?}", eye_new, yalpha / PI * 180.0);
-    eye_new = &yrot * &eye_new;
-    println!("{:?}", eye_new);
-    //
-    let xalpha = if cam.eye.z == 0.0 {
+    let yalpha = if cam.eye.z == 0.0 {
         0.0
     } else {
-        (eye_new.y / eye_new.z).atan()
+        (cam.eye.x / cam.eye.z).tan()
     };
-    let xrot = Matrix3x3::new(1.0, 0.0, 0.0, 0.0, xalpha.cos(), -(xalpha.sin()), 0.0, xalpha.sin(), xalpha.cos());
-    println!("{:?} -> x {:?}", eye_new, xalpha / PI * 180.0);
-    eye_new = &xrot * &eye_new;
+    let yrot = Matrix3x3::new(yalpha.cos(), 0.0, yalpha.sin(), 0.0, 1.0, 0.0, -(yalpha.sin()), 0.0, yalpha.cos());
 
-    println!("{:?}", eye_new);
+    let mut eye_new = &yrot * &cam.eye;
+    let zalpha = (-eye_new.x / eye_new.y).tan();
+    let zrot = Matrix3x3::new(zalpha.cos(), -(zalpha.sin()), 0.0, zalpha.sin(), zalpha.cos(), 0.0, 0.0, 0.0, 1.0);
 
-    // TODO NOW
-    // - ROTATE AROUND Z ACHISS SO THAT EDGE OF PRJECTION SCREEN Y = 0
-    // - ALL X / WIDTH/2
-    // - ALL Y / HEIGHT/2
-    // - MOVE Z TO MIDDLE OF NEAR AND FAR && ALL Z / (FAR-NEAR)/2
+    pstrich = &zrot * &(&yrot * &(&pstrich -&nstrich));
+    eye_new = &zrot * &eye_new;
 
-
+    // println!("{:?}", alpha / PI * 180.0);
     // println!("{:?}", epstrichvec.clone());
     // println!("{:?}", &zrot * &eye_new);
     // println!("{:?} -> {:?}", zalpha / PI * 180.0, eye_new);
+    println!("{:?}", yalpha);
     Point::new(0, 0)
 }

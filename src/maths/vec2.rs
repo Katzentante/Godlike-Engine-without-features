@@ -1,3 +1,4 @@
+use std::ops::Mul;
 use sdl2::rect::Point;
 
 pub struct Vec2 {

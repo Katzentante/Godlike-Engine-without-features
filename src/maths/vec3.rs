@@ -1,8 +1,8 @@
 use std::ops::{Mul, Add, Sub};
 
-pub const IDENTITY_X3: Vec3 = Vec3 {x: 1.0, y: 0.0, z: 0.0};
-pub const IDENTITY_Y3: Vec3 = Vec3 {x: 0.0, y: 1.0, z: 0.0};
-pub const IDENTITY_Z3: Vec3 = Vec3 {x: 0.0, y: 0.0, z: 1.0};
+pub const IDENTITY_X: Vec3 = Vec3 {x: 1.0, y: 0.0, z: 0.0};
+pub const IDENTITY_Y: Vec3 = Vec3 {x: 0.0, y: 1.0, z: 0.0};
+pub const IDENTITY_Z: Vec3 = Vec3 {x: 0.0, y: 0.0, z: 1.0};
 
 #[derive(Clone, Debug)]
 pub struct Vec3 {
@@ -44,11 +44,11 @@ impl Mul<&Vec3> for f32 {
     }
 }
 
-impl Add for Vec3 {
-    type Output = Self;
+impl Add for &Vec3 {
+    type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Self {
+        Vec3 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             z: self.z + rhs.z,
@@ -56,11 +56,11 @@ impl Add for Vec3 {
     }
 }
 
-impl Sub for Vec3 {
-    type Output = Self;
+impl Sub for &Vec3 {
+    type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Self {
+        Vec3 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             z: self.z - rhs.z,

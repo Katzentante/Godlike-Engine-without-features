@@ -1,4 +1,4 @@
-use crate::maths::vector::Vec3;
+use crate::maths::vec3::Vec3;
 
 pub struct Camera {
     pub fov: f32,
