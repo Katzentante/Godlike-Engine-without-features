@@ -77,61 +77,11 @@ pub fn main() {
         }
     }
 
-    let pos = Point::new(34, 78);
-
-    let origin = Vec3 {
-        x: 0.0,
-        y: 0.0,
-        // z: 6.0,
-        z: 0.0,
-    };
-    let y_axis = Vec3 {
-        x: 0.0,
-        y: 10.0,
-        z: 0.0,
-    };
-    let x_axis = Vec3 {
-        x: 10.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    let z_axis = Vec3 {
-        x: 0.0,
-        y: 0.0,
-        // z: 6.0,
-        z: 10.0,
-    };
-
-    let mut cam = Camera {
-        fov: 100.0,
-        aspect_ratio: 16.0 / 9.0,
-        near: 2.0,
-        far: 10.0,
-        eye: Vec3 {
-            x: 5.0,
-            y: 5.0,
-            z: 5.0,
-        },
-        at: Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        // ist rechwinklig zu der ebene und zeigt in die obere Mitte
-        up: Vec3 {
-            x: -1.0,
-            y: -1.0,
-            z: 2.0,
-        },
-    };
-
-    let size = window.size();
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.set_draw_color(Color::WHITE);
     canvas.clear();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut i = 0;
     'running: loop {
         // i = (i + 1) % 255;
         // canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
@@ -143,67 +93,14 @@ pub fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::D),
-                    ..
-                } => {
-                    cam.eye.y += SPEED;
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::S),
-                    ..
-                } => {
-                    cam.eye.x -= SPEED;
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::W),
-                    ..
-                } => {
-                    cam.eye.x += SPEED;
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::A),
-                    ..
-                } => {
-                    cam.eye.y -= SPEED;
-                }
                 _ => {}
             }
         }
-        // The rest of the game loop goes here...
-        // canvas.draw_line(pos_mouse, pos).expect("Never error!");
-
-        let pos1 = get_projected(&cam, &origin, size.0 as f32, size.1 as f32);
-        let pos2 = get_projected(&cam, &y_axis, size.0 as f32, size.1 as f32);
-        let pos3 = get_projected(&cam, &x_axis, size.0 as f32, size.1 as f32);
-        let pos4 = get_projected(&cam, &z_axis, size.0 as f32, size.1 as f32);
-        println!();
-
-        // canvas.draw_line(pos1, pos2).unwrap();
-        // canvas.draw_line(pos2, pos3).unwrap();
-        // canvas.draw_line(pos3, pos4).unwrap();
-        // Y
-        canvas.set_draw_color(Color::GREEN);
-        canvas.draw_line(pos4, pos1).unwrap();
-        canvas.draw_point(pos4).unwrap();
-
-        // X
-        canvas.set_draw_color(Color::BLUE);
-        canvas.draw_line(pos3, pos1).unwrap();
-        canvas.draw_point(pos3).unwrap();
-
-        // Z
-        canvas.set_draw_color(Color::RED);
-        canvas.draw_line(pos2, pos1).unwrap();
-        canvas.draw_point(pos2).unwrap();
-
-        canvas.set_draw_color(Color::WHITE);
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }
 
 fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: f32) -> Point {
-
     (0,0).into()
 }
