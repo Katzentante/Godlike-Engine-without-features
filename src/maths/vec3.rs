@@ -68,6 +68,12 @@ impl Sub for &Vec3 {
     }
 }
 
+impl PartialEq for &Vec3 {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
 #[cfg(test)]
 mod tests {
     // Import the necessary modules

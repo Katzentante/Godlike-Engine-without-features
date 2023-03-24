@@ -185,14 +185,17 @@ pub fn main() {
         // Y
         canvas.set_draw_color(Color::GREEN);
         canvas.draw_line(pos4, pos1).unwrap();
+        canvas.draw_point(pos4).unwrap();
 
         // X
         canvas.set_draw_color(Color::BLUE);
         canvas.draw_line(pos3, pos1).unwrap();
+        canvas.draw_point(pos3).unwrap();
 
         // Z
         canvas.set_draw_color(Color::RED);
         canvas.draw_line(pos2, pos1).unwrap();
+        canvas.draw_point(pos2).unwrap();
 
         canvas.set_draw_color(Color::WHITE);
         canvas.present();
@@ -207,12 +210,23 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     println!("cam pos: {:?}", cam.eye);
     let epvec = &Vec3::from_points(&cam.eye, original);
     let eavec = Vec3::from_points(&cam.eye, &cam.at);
-    let alpha = eavec.cross_angle(epvec);
-    // let length1 = alpha.acos() / cam.near;
+    // FIXME if eavec and epvec are same teil durch NaN
+    let alpha = if &eavec != epvec {
+        eavec.cross_angle(epvec)
+    } else {
+        0.0
+    };
     let length1 = cam.near / alpha.cos();
-    let r = length1 / epvec.len();
+    // FIXME can teil durch zero
+    let epveclen = epvec.len();
+    let r = if epveclen > 0.0 {
+        length1 / epveclen
+    } else {
+        cam.near / eavec.len()
+    };
     let epstrichvec = r * epvec;
     let mut pstrich = &cam.eye + &epstrichvec;
+    println!("len: {:?} -> r {:?}", alpha, length1);
     // print!("p': {:?}", pstrich);
     // convert fov to radians
     let width = 2.0 * cam.near / (cam.fov * PI / 360.0).tan();
@@ -238,6 +252,7 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     } else {
         (eye_new.z / eye_new.x).atan() - std::f32::consts::FRAC_PI_2
     };
+    // see: https://www.mathebibel.de/drehmatrix
     let yrot = Matrix3x3::new(
         yalpha.cos(),
         0.0,
@@ -307,12 +322,12 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     eye_new = &zrot * &eye_new;
     pstrich = &zrot * &pstrich;
     up = &zrot * &up;
-    // println!(
-    //     "(after z) {:?} p'5: {:?} up'''': {:?}",
-    //     zalpha / PI * 180.0,
-    //     pstrich,
-    //     up
-    // );
+    println!(
+        "(after z) {:?} p'5: {:?} up'''': {:?}",
+        zalpha / PI * 180.0,
+        pstrich,
+        up
+    );
 
     pstrich = Vec3 {
         x: (pstrich.x / (height / 2.0) + 1.0) / 2.0,
@@ -332,8 +347,12 @@ fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: 
     // println!("{:?}", epstrichvec.clone());
     // println!("{:?}", &zrot * &eye_new);
     // println!("{:?} -> {:?}", zalpha / PI * 180.0, eye_new);
-    Point::new(
-        (pstrich.x * final_width) as i32,
-        (pstrich.y * final_height) as i32,
-    )
+    if pstrich.x.abs() < 100.0 && pstrich.y.abs() < 100.0 {
+        Point::new(
+            (pstrich.x * final_width) as i32,
+            (pstrich.y * final_height) as i32,
+        )
+    } else {
+        Point::new(0, 0)
+    }
 }
