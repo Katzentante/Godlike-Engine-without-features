@@ -2,7 +2,6 @@ use config::{Config, FileFormat};
 use log::{debug, error, info};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::sys::{SDL_GL_GetDrawableSize, SDL_GetWindowSize};
@@ -61,12 +60,14 @@ pub fn main() {
     };
 
     #[rustfmt::skip]
-    let triangle = vec![
+    let vertices = vec![
         crate::maths::vec3::IDENTITY_X,
         crate::maths::vec3::IDENTITY_Y,
         crate::maths::vec3::IDENTITY_Z,
         crate::maths::vec3::ZERO,
     ];
+
+    let lines = vec![0, 1, 1, 2, 2, 0, 3, 0, 3, 1, 3, 2];
 
     info!("{:?}", config);
 
@@ -123,16 +124,21 @@ pub fn main() {
             error!("Could not get canvas output size");
             continue 'running;
         }
-        triangle
+
+        // iterate over a pair of two elemtnts at a time
+        lines
             .iter()
-            .zip(triangle.iter().skip(1))
+            .step_by(2)
+            .zip(lines.iter().skip(1).step_by(2))
             .for_each(|(start, end)| {
-                let start = get_projected(&cam, start, size);
-                let end = get_projected(&cam, end, size);
+                // debug!("{}, {}", start, end);
+                let start = get_projected(&cam, &vertices[*start], size);
+                let end = get_projected(&cam, &vertices[*end], size);
                 if let Err(e) = canvas.draw_line(start, end) {
                     error!("Error while drawing triangle line: {:?}", e);
                 }
             });
+        debug!("");
 
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -141,5 +147,7 @@ pub fn main() {
 
 /// Returns the actual pixel position of the projected original Vec3 through the given camera
 fn get_projected(cam: &Camera, original: &Vec3, final_size: (f32, f32)) -> Point {
+    debug!("{:?}", original);
+
     (0, 0).into()
 }
