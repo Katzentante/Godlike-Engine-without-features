@@ -3,6 +3,7 @@ use std::ops::{Mul, Add, Sub};
 pub const IDENTITY_X: Vec3 = Vec3 {x: 1.0, y: 0.0, z: 0.0};
 pub const IDENTITY_Y: Vec3 = Vec3 {x: 0.0, y: 1.0, z: 0.0};
 pub const IDENTITY_Z: Vec3 = Vec3 {x: 0.0, y: 0.0, z: 1.0};
+pub const ZERO: Vec3 = Vec3 {x: 0.0, y: 0.0, z: 0.0};
 
 #[derive(Clone, Debug)]
 pub struct Vec3 {
@@ -12,8 +13,12 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn from_points(one: &Vec3, two: &Vec3) -> Vec3 {
-        Vec3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z}
+    }
+
+    pub fn from_points(one: &Vec3, two: &Vec3) -> Self {
+        Self {
             x: two.x - one.x,
             y: two.y - one.y,
             z: two.z - one.z

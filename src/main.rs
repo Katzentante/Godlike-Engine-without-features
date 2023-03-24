@@ -60,6 +60,14 @@ pub fn main() {
         }
     };
 
+    #[rustfmt::skip]
+    let triangle = vec![
+        crate::maths::vec3::IDENTITY_X,
+        crate::maths::vec3::IDENTITY_Y,
+        crate::maths::vec3::IDENTITY_Z,
+        crate::maths::vec3::ZERO,
+    ];
+
     info!("{:?}", config);
 
     let sdl_context = sdl2::init().unwrap();
@@ -76,6 +84,17 @@ pub fn main() {
             error!("{:?}", e);
         }
     }
+
+    let window_size = window.drawable_size();
+    let mut cam = Camera {
+        fovy: 90.0,
+        aspect_ratio: window_size.0 as f32 / window_size.1 as f32,
+        near: 2.0,
+        far: 10.0,
+        pos: Vec3::new(0.0, 0.0, 5.0),
+        target: maths::vec3::ZERO,
+        up: maths::vec3::IDENTITY_Y,
+    };
 
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.set_draw_color(Color::WHITE);
@@ -96,11 +115,31 @@ pub fn main() {
                 _ => {}
             }
         }
+
+        let size;
+        if let Ok((x, y)) = canvas.output_size() {
+            size = (x as f32, y as f32);
+        } else {
+            error!("Could not get canvas output size");
+            continue 'running;
+        }
+        triangle
+            .iter()
+            .zip(triangle.iter().skip(1))
+            .for_each(|(start, end)| {
+                let start = get_projected(&cam, start, size);
+                let end = get_projected(&cam, end, size);
+                if let Err(e) = canvas.draw_line(start, end) {
+                    error!("Error while drawing triangle line: {:?}", e);
+                }
+            });
+
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }
 
-fn get_projected(cam: &Camera, original: &Vec3, final_width: f32, final_height: f32) -> Point {
-    (0,0).into()
+/// Returns the actual pixel position of the projected original Vec3 through the given camera
+fn get_projected(cam: &Camera, original: &Vec3, final_size: (f32, f32)) -> Point {
+    (0, 0).into()
 }
