@@ -37,6 +37,9 @@ struct GameConfig {
 const SPEED: f32 = 0.5;
 
 pub fn main() {
+    // std::env::set_var("RUST_LOG", "error,warn,info,debug,trace");
+    std::env::set_var("RUST_LOG", "info,debug");
+    // std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let config = Config::builder()
         .add_source(config::File::with_name("Config.toml"))
@@ -58,16 +61,6 @@ pub fn main() {
             std::process::exit(1);
         }
     };
-
-    #[rustfmt::skip]
-    let vertices = vec![
-        crate::maths::vec3::IDENTITY_X,
-        crate::maths::vec3::IDENTITY_Y,
-        crate::maths::vec3::IDENTITY_Z,
-        crate::maths::vec3::ZERO,
-    ];
-
-    let lines = vec![0, 1, 1, 2, 2, 0, 3, 0, 3, 1, 3, 2];
 
     info!("{:?}", config);
 
@@ -97,6 +90,24 @@ pub fn main() {
         up: maths::vec3::IDENTITY_Y,
     };
 
+    #[rustfmt::skip]
+    let vertices = vec![
+        crate::maths::vec3::IDENTITY_X,
+        crate::maths::vec3::IDENTITY_Y,
+        crate::maths::vec3::IDENTITY_Z,
+        crate::maths::vec3::ZERO,
+    ];
+
+    #[rustfmt::skip]
+    let lines = vec![
+        0, 1,
+        1, 2,
+        2, 0,
+        3, 0,
+        3, 1,
+        3, 2
+    ];
+
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.set_draw_color(Color::WHITE);
     canvas.clear();
@@ -117,13 +128,13 @@ pub fn main() {
             }
         }
 
-        let size;
-        if let Ok((x, y)) = canvas.output_size() {
-            size = (x as f32, y as f32);
-        } else {
-            error!("Could not get canvas output size");
-            continue 'running;
-        }
+        let size = match canvas.output_size() {
+            Ok((x, y)) => (x as f32, y as f32),
+            Err(e) => {
+                error!("Could not get canvas output size: {:?}", e);
+                continue 'running;
+            }
+        };
 
         // iterate over a pair of two elemtnts at a time
         lines
@@ -146,7 +157,7 @@ pub fn main() {
 }
 
 /// Returns the actual pixel position of the projected original Vec3 through the given camera
-fn get_projected(cam: &Camera, original: &Vec3, final_size: (f32, f32)) -> Point {
+fn get_projected(cam: &Camera, original: &Vec3, window_size: (f32, f32)) -> Point {
     debug!("{:?}", original);
 
     (0, 0).into()
