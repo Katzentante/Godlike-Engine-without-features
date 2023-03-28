@@ -5,5 +5,6 @@ fn main() -> Result<(), VarError> {
     println!("cargo:rerun-if-changed=Config.toml");
 
     let out_dir = env::var("OUT_DIR")?;
+
     Ok(())
 }

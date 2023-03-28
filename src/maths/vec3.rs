@@ -1,4 +1,4 @@
-use std::ops::{Mul, Add, Sub};
+use std::ops::{Mul, Add, Sub, Neg};
 
 pub const IDENTITY_X: Vec3 = Vec3 {x: 1.0, y: 0.0, z: 0.0};
 pub const IDENTITY_Y: Vec3 = Vec3 {x: 0.0, y: 1.0, z: 0.0};
@@ -76,6 +76,18 @@ impl Sub for &Vec3 {
 impl PartialEq for &Vec3 {
     fn eq(&self, other: &Self) -> bool {
         self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
+impl Neg for &Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Self::Output {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z
+        }
     }
 }
 
