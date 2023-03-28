@@ -1,23 +1,20 @@
+use std::time::Duration;
+
 use config::{Config, FileFormat};
 use log::{debug, error, info};
-use sdl2::event::Event;
+use sdl2::event::{Event, WindowEvent};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Point;
-use sdl2::sys::{SDL_GL_GetDrawableSize, SDL_GetWindowSize};
+use sdl2::rect::{Point, Rect};
 use sdl2::video::FullscreenType;
-use serde::{Deserialize, Serialize};
-use std::f32::consts::PI;
-use std::time::Duration;
+use serde::Deserialize;
 
 mod camera;
 mod maths;
 
 use maths::vec3::Vec3;
 
-use crate::camera::camera::Camera;
-use crate::maths::mat3x3::Matrix3x3;
-use crate::maths::vec3;
+use crate::camera::camera::PerspectiveCamera;
 
 // use log::{debug, error, log_enabled, info, Level};
 
@@ -70,6 +67,7 @@ pub fn main() {
     let mut window = video_subsystem
         .window("Best game", 900, 600)
         .position_centered()
+        .resizable()
         .build()
         .unwrap();
 
@@ -80,7 +78,7 @@ pub fn main() {
     }
 
     let window_size = window.drawable_size();
-    let mut cam = Camera {
+    let mut cam = PerspectiveCamera {
         fovy: 90.0,
         aspect_ratio: window_size.0 as f32 / window_size.1 as f32,
         near: 2.0,
@@ -92,9 +90,13 @@ pub fn main() {
 
     #[rustfmt::skip]
     let vertices = vec![
-        crate::maths::vec3::IDENTITY_X,
-        crate::maths::vec3::IDENTITY_Y,
-        crate::maths::vec3::IDENTITY_Z,
+        // crate::maths::vec3::IDENTITY_X,
+        // crate::maths::vec3::IDENTITY_Y,
+        // crate::maths::vec3::IDENTITY_Z,
+        Vec3::new(1.0, 1.0, 2.0),
+        Vec3::new(1.0, 3.0, 3.0),
+        Vec3::new(0.0, 4.0, 1.0),
+        Vec3::new(1.0, 3.0, 0.0),
         crate::maths::vec3::ZERO,
     ];
 
@@ -111,6 +113,13 @@ pub fn main() {
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.set_draw_color(Color::WHITE);
     canvas.clear();
+    let mut size = match canvas.output_size() {
+        Ok((x, y)) => (x as f32, y as f32),
+        Err(e) => {
+            error!("Could not get canvas output size: {:?}", e);
+            panic!("Could not get Canvas window size: FIXME no panic");
+        }
+    };
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
@@ -124,17 +133,16 @@ pub fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                Event::Window {
+                    win_event: WindowEvent::Resized(x, y),
+                    ..
+                } => {
+                    cam.aspect_ratio = x as f32 / y as f32;
+                    size = (x as f32, y as f32);
+                }
                 _ => {}
             }
         }
-
-        let size = match canvas.output_size() {
-            Ok((x, y)) => (x as f32, y as f32),
-            Err(e) => {
-                error!("Could not get canvas output size: {:?}", e);
-                continue 'running;
-            }
-        };
 
         // iterate over a pair of two elemtnts at a time
         lines
@@ -149,16 +157,21 @@ pub fn main() {
                     error!("Error while drawing triangle line: {:?}", e);
                 }
             });
-        debug!("");
+        // debug!("");
+
+        canvas.set_draw_color(Color::BLACK);
+        canvas.fill_rect(Rect::new((size.0 / 2.0) as i32, (size.1 / 2.0) as i32, 40, 40)).expect("Could not fill middle rect");
+        canvas.set_draw_color(Color::WHITE);
 
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 }
 
-/// Returns the actual pixel position of the projected original Vec3 through the given camera
-fn get_projected(cam: &Camera, original: &Vec3, window_size: (f32, f32)) -> Point {
-    debug!("{:?}", original);
+/// Returns the actual pixel position on screen of the projected original Vec3 through the given camera
+fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f32)) -> Point {
+    // debug!("{:?}", original);
+
 
     (0, 0).into()
 }
