@@ -85,9 +85,10 @@ pub fn main() {
         aspect_ratio: window_size.0 as f32 / window_size.1 as f32,
         near: 2.0,
         far: 10.0,
-        pos: Vec3::new(0.0, 5.0, 5.0),
+        pos: Vec3::new(2.0, 2.0, 5.0),
         target: maths::vec3::ZERO,
-        up: maths::vec3::IDENTITY_Y,
+        // up: maths::vec3::IDENTITY_Y,
+        up: Vec3::new(-2.0, -2.0, 0.8), // up: Vec3::new(0.0, 1.0, -0.8)
     };
 
     // pyramid
@@ -172,8 +173,18 @@ pub fn main() {
         //         20,
         //     ))
         //     .expect("Could not fill middle rect");
-        canvas.draw_line(Point::new(size.0 as i32 / 2, 0), Point::new(size.0 as i32/ 2, size.1 as i32)).unwrap();
-        canvas.draw_line(Point::new(0, size.1 as i32 / 2), Point::new(size.0 as i32, size.1 as i32 / 2)).unwrap();
+        canvas
+            .draw_line(
+                Point::new(size.0 as i32 / 2, 0),
+                Point::new(size.0 as i32 / 2, size.1 as i32),
+            )
+            .unwrap();
+        canvas
+            .draw_line(
+                Point::new(0, size.1 as i32 / 2),
+                Point::new(size.0 as i32, size.1 as i32 / 2),
+            )
+            .unwrap();
         canvas.set_draw_color(Color::WHITE);
 
         canvas.present();
@@ -209,10 +220,12 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     // drehe um y-Achse !! x sollte nun 0 sein
 
+
+    // z/x ?
     let alphay = if 0.0 == cam_pos_new.z {
         0.0
     } else {
-        (cam_pos_new.x / cam_pos_new.z).atan()
+        -((cam_pos_new.x / cam_pos_new.z).atan())
     };
     let rot_y = Matrix3x3::new(
         alphay.cos(),
@@ -231,6 +244,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     // drehe um x-Achse so dass eye auf z-Achse
 
+    // TODO z/y ?
     let alphax = if 0.0 == cam_pos_new.z {
         0.0
     } else {
@@ -292,8 +306,9 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
         to_gradient(alphaz)
     );
     debug!("cam_z_Achse: {:?}", cam_pos_new);
-    debug!("up windkwl y-Achse: {:?}", alpha);
-    debug!("point: ({}, {})", point.x / width, point.y / height);
+    debug!("up windkwl y-Achse: {:?}", to_gradient(alpha));
+    // debug!("point: ({}, {})", point.x / width, point.y / height);
+    debug!("point: ({}, {})", point.x, point.y);
 
     // drehe up new vektor so dass er gleich wie y-Achse ist
 
