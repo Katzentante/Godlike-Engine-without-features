@@ -13,7 +13,7 @@ use serde::Deserialize;
 mod camera;
 mod maths;
 
-use maths::vec3::Vec3;
+use maths::vec3::{Vec3, IDENTITY_Y};
 
 use crate::camera::camera::PerspectiveCamera;
 use crate::maths::vec3;
@@ -33,7 +33,8 @@ struct GameConfig {
     fullscreen: bool,
 }
 
-const SPEED: f32 = 0.5;
+const SPEED: f32 = 0.33333;
+const WINKEL_SPEED: f32 = 0.1;
 
 pub fn main() {
     // std::env::set_var("RUST_LOG", "error,warn,info,debug,trace");
@@ -85,11 +86,14 @@ pub fn main() {
         aspect_ratio: window_size.0 as f32 / window_size.1 as f32,
         near: 2.0,
         far: 10.0,
-        pos: Vec3::new(2.0, 2.0, 5.0),
+        pos: Vec3::new(-2.0, 2.0, 5.0),
         target: maths::vec3::ZERO,
-        // up: maths::vec3::IDENTITY_Y,
-        up: Vec3::new(-2.0, -2.0, 0.8), // up: Vec3::new(0.0, 1.0, -0.8)
+        up: maths::vec3::IDENTITY_Y,
+        // up: Vec3::new(-2.0, -2.0, 0.8), // up: Vec3::new(0.0, 1.0, -0.8)
     };
+
+    cam.calc_up();
+    debug!("{:?}", cam.up);
 
     // pyramid
     #[rustfmt::skip]
@@ -99,6 +103,10 @@ pub fn main() {
         Vec3::new(2.0, 0.0, 2.0), // C
         Vec3::new(2.0, 0.0, 0.0), // D
         Vec3::new(1.0, 3.0, 1.0), // S
+
+        Vec3::new(20.0, 0.0, 0.0), // x axis
+        Vec3::new(0.0, 20.0, 0.0), // y axis
+        Vec3::new(0.0, 0.0, 20.0), // z axis
     ];
 
     #[rustfmt::skip]
@@ -110,7 +118,11 @@ pub fn main() {
         0,4,
         1,4,
         2,4,
-        3,4
+        3,4,
+
+        0,5,
+        0,6,
+        0,7,
     ];
 
     let mut canvas = window.into_canvas().build().unwrap();
@@ -143,6 +155,72 @@ pub fn main() {
                     cam.aspect_ratio = x as f32 / y as f32;
                     size = (x as f32, y as f32);
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => {
+                    let alphaz: f32 = WINKEL_SPEED;
+                    let rot_z = Matrix3x3::new(
+                        alphaz.cos(),
+                        -(alphaz.sin()),
+                        0.0,
+                        alphaz.sin(),
+                        alphaz.cos(),
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    );
+                    cam.pos = &rot_z * &cam.pos;
+                    cam.calc_up();
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::A),
+                    ..
+                } => {
+                    let alphaz: f32 = -WINKEL_SPEED;
+                    let rot_z = Matrix3x3::new(
+                        alphaz.cos(),
+                        -(alphaz.sin()),
+                        0.0,
+                        alphaz.sin(),
+                        alphaz.cos(),
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    );
+                    cam.pos = &rot_z * &cam.pos;
+                    cam.calc_up();
+                }
+                // FIXME does not work because if ea is 0,0,0 kaputt
+                Event::KeyDown {
+                    keycode: Some(Keycode::W),
+                    ..
+                } => {
+                    let ea = Vec3::from_points(&cam.pos, &cam.target);
+                    let r = if let Some(s) = ea.len() {
+                        1.0 - SPEED / s
+                    } else {
+                        1.0 - SPEED
+                    };
+                    cam.target = &cam.target + &(r * &ea);
+                    cam.calc_up();
+                },
+                Event::KeyDown {
+                    keycode: Some(Keycode::S),
+                    ..
+                } => {
+                    let ea = Vec3::from_points(&cam.pos, &cam.target);
+                    let r = if let Some(s) = ea.len() {
+                        1.0 + SPEED / s
+                    } else {
+                        1.0 + SPEED
+                    };
+                    cam.target = &cam.target + &(r * &ea);
+                    cam.calc_up();
+                }
+
                 _ => {}
             }
         }
@@ -156,6 +234,14 @@ pub fn main() {
             .for_each(|(start, end)| {
                 // debug!("{}, {}", start, end);
                 debug!("{:?}->{:?}", start, end);
+                let colour = match end {
+                    5 => Color::RED,
+                    6 => Color::GREEN,
+                    7 => Color::BLUE,
+                    _ => Color::BLACK,
+                };
+                canvas.set_draw_color(colour);
+
                 let start = get_projected(&cam, &vertices[*start], size);
                 let end = get_projected(&cam, &vertices[*end], size);
                 if let Err(e) = canvas.draw_line(start, end) {
@@ -173,18 +259,18 @@ pub fn main() {
         //         20,
         //     ))
         //     .expect("Could not fill middle rect");
-        canvas
-            .draw_line(
-                Point::new(size.0 as i32 / 2, 0),
-                Point::new(size.0 as i32 / 2, size.1 as i32),
-            )
-            .unwrap();
-        canvas
-            .draw_line(
-                Point::new(0, size.1 as i32 / 2),
-                Point::new(size.0 as i32, size.1 as i32 / 2),
-            )
-            .unwrap();
+        // canvas
+        //     .draw_line(
+        //         Point::new(size.0 as i32 / 2, 0),
+        //         Point::new(size.0 as i32 / 2, size.1 as i32),
+        //     )
+        //     .unwrap();
+        // canvas
+        //     .draw_line(
+        //         Point::new(0, size.1 as i32 / 2),
+        //         Point::new(size.0 as i32, size.1 as i32 / 2),
+        //     )
+        //     .unwrap();
         canvas.set_draw_color(Color::WHITE);
 
         canvas.present();
@@ -219,7 +305,6 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     let mut up_pos = &cam_pos_new + &cam.up;
 
     // drehe um y-Achse !! x sollte nun 0 sein
-
 
     // z/x ?
     let alphay = if 0.0 == cam_pos_new.z {
@@ -267,15 +352,9 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     // drehe um z-Achse do dass up = identety-Y
     let up_after_rot = Vec3::from_points(&cam_pos_new, &up_pos);
-    let alpha = up_after_rot.cross_angle(&vec3::IDENTITY_Y);
-    // FIXME
-    // if alpha > 180°
-    // let alphaz = if alpha > std::f32::consts::PI {
-    //     alpha - std::f32::consts::FRAC_PI_2
-    // } else {
-    //     alpha
-    // };
-    //
+
+    // FIXME ( all rotations )
+    // drehe up new vektor so dass er kolinear zur y-Achse ist (ein Vielfaches)
     let alphaz = if 0.0 == up_after_rot.y {
         if up_after_rot.x.is_sign_positive() {
             std::f32::consts::FRAC_PI_2
@@ -283,7 +362,15 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
             -std::f32::consts::FRAC_PI_2
         }
     } else {
-        (up_after_rot.x / up_after_rot.y).atan()
+        // let alpha = (up_after_rot.x / up_after_rot.y).atan();
+        let alpha = up_after_rot.cross_angle(&IDENTITY_Y);
+        if up_after_rot.x.is_sign_positive() {
+            alpha
+        } else {
+            // std::f32::consts::PI - alpha
+            // alpha + std::f32::consts::PI
+            -alpha
+        }
     };
     let rot_z = Matrix3x3::new(
         alphaz.cos(),
@@ -299,18 +386,16 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     point = &rot_z * &point;
     cam_pos_new = &rot_z * &cam_pos_new;
 
-    debug!(
-        "xa: {}, ya: {}, za: {}",
-        to_gradient(alphax),
-        to_gradient(alphay),
-        to_gradient(alphaz)
-    );
-    debug!("cam_z_Achse: {:?}", cam_pos_new);
-    debug!("up windkwl y-Achse: {:?}", to_gradient(alpha));
+    // debug!(
+    //     "xa: {}, ya: {}, za: {}",
+    //     to_gradient(alphax),
+    //     to_gradient(alphay),
+    //     to_gradient(alphaz)
+    // );
+    // debug!("cam_z_Achse: {:?}", cam_pos_new);
+    // debug!("up windkwl y-Achse: {:?}", to_gradient(alpha));
     // debug!("point: ({}, {})", point.x / width, point.y / height);
-    debug!("point: ({}, {})", point.x, point.y);
-
-    // drehe up new vektor so dass er gleich wie y-Achse ist
+    // debug!("point: ({}, {})", point.x, point.y);
 
     // später so dass at auf 0,0,0 und eye auf z achse und up=(0,1,0) und dacnn in Mittlepunkt geschoben/gedreht wird
 

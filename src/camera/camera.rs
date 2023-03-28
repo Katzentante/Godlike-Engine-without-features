@@ -12,7 +12,7 @@ pub struct PerspectiveCamera {
 }
 
 impl PerspectiveCamera {
-    // FIXME works only if all x y and z are non zero
+    // Z achsis of up points upward
     pub fn calc_up(&mut self) {
         if self.target.z - self.pos.z != 0.0 {
             self.up.x = self.target.x - self.pos.x;

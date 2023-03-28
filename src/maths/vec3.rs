@@ -28,12 +28,17 @@ impl Vec3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn len(&self) -> f32 {
-        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    pub fn len(&self) -> Option<f32> {
+        let s = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
+        if s == 0.0 {
+            None
+        } else {
+            Some(s)
+        }
     }
 
     pub fn cross_angle(&self, other: &Self) -> f32 {
-        (self.dot_product(other) / (self.len() * other.len())).acos()
+        (self.dot_product(other) / (self.len().unwrap_or(0.0) * other.len().unwrap_or(0.0))).acos()
     }
 }
 
@@ -107,7 +112,7 @@ mod tests {
     #[test]
     fn test_length() {
         let vec1 = Vec3 {x: 3.0, y: 3.0, z: 3.0};
-        assert_eq!(vec1.len(), (27.0f32).sqrt());
+        assert_eq!(vec1.len(), Some((27.0f32).sqrt()));
     }
 
 }
