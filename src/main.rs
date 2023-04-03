@@ -172,8 +172,7 @@ pub fn main() {
                         0.0,
                         1.0,
                     );
-                    cam.pos = &rot_z * &cam.pos;
-                    cam.calc_up();
+                    cam.set_pos(&(rot_z * &cam.pos));
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
@@ -191,8 +190,7 @@ pub fn main() {
                         0.0,
                         1.0,
                     );
-                    cam.pos = &rot_z * &cam.pos;
-                    cam.calc_up();
+                    cam.set_pos(&(rot_z * &cam.pos));
                 }
                 // FIXME does not work because if ea is 0,0,0 kaputt
                 Event::KeyDown {
@@ -205,8 +203,7 @@ pub fn main() {
                     } else {
                         1.0 - SPEED
                     };
-                    cam.target = &cam.target + &(r * &ea);
-                    cam.calc_up();
+                    cam.set_target(&(cam.target + &(r * &ea)))
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
@@ -218,8 +215,7 @@ pub fn main() {
                     } else {
                         1.0 + SPEED
                     };
-                    cam.target = &cam.target + &(r * &ea);
-                    cam.calc_up();
+                    cam.set_target(&(&cam.target + &(r * &ea)));
                 }
 
                 _ => {}
@@ -251,7 +247,6 @@ pub fn main() {
                 debug!("");
             });
         debug!("");
-
 
         canvas.set_draw_color(Color::RED);
         let point = get_projected(&cam, &cam.target, size);
@@ -384,7 +379,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     // später so dass at auf 0,0,0 und eye auf z achse und up=(0,1,0) und dacnn in Mittlepunkt geschoben/gedreht wird
 
-    // verschiebe so, dass die camera eye auf 0,0,0
+    // verschiebe so, dass die camera.pos auf 0,0,0
     point = &point - &cam_pos_new;
     cam_pos_new = vec3::ZERO;
 
@@ -398,7 +393,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     point.x = (point.x + 1.0) / 2.0;
     point.y = (-point.y + 1.0) / 2.0;
-    point.z = (point.z + 1.0) / 2.0;
+    // point.z = (point.z + 1.0) / 2.0;
 
     // debug!("{:?}", point);
     Point::new(

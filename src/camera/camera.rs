@@ -12,6 +12,7 @@ pub struct PerspectiveCamera {
 }
 
 impl PerspectiveCamera {
+    // TODO find better wy of computing and thinking ab out up vec
     // Z achsis of up points upward
     pub fn calc_up(&mut self) {
         if self.target.z - self.pos.z != 0.0 {
@@ -27,6 +28,16 @@ impl PerspectiveCamera {
             self.up.y = self.target.y - self.pos.y;
             self.up.x = -(self.up.z.powi(2) + self.up.y.powi(2)) / (self.target.x - self.pos.x);
         }
+    }
+
+    pub fn set_target(&mut self, target: &Vec3) {
+        self.target = target;
+        self.calc_up();
+    }
+
+    pub fn set_pos(&mut self, pos: &Vec3) {
+        self.pos = pos;
+        self.calc_up();
     }
 }
 
