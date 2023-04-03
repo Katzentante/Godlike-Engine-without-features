@@ -13,10 +13,9 @@ use serde::Deserialize;
 mod camera;
 mod maths;
 
-use maths::vec3::{Vec3, IDENTITY_Y};
+use maths::vec3::{self, Vec3, IDENTITY_Y};
 
 use crate::camera::camera::PerspectiveCamera;
-use crate::maths::vec3;
 
 // use log::{debug, error, log_enabled, info, Level};
 
@@ -38,7 +37,7 @@ const WINKEL_SPEED: f32 = 0.1;
 
 pub fn main() {
     // std::env::set_var("RUST_LOG", "error,warn,info,debug,trace");
-    std::env::set_var("RUST_LOG", "info,debug");
+    // std::env::set_var("RUST_LOG", "info,debug");
     // std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     let config = Config::builder()
@@ -87,7 +86,7 @@ pub fn main() {
         near: 2.0,
         far: 10.0,
         pos: Vec3::new(-2.0, 2.0, 5.0),
-        target: maths::vec3::ZERO,
+        target: Vec3::new(4.0, 4.0, 4.0),
         up: maths::vec3::IDENTITY_Y,
         // up: Vec3::new(-2.0, -2.0, 0.8), // up: Vec3::new(0.0, 1.0, -0.8)
     };
@@ -107,6 +106,8 @@ pub fn main() {
         Vec3::new(20.0, 0.0, 0.0), // x axis
         Vec3::new(0.0, 20.0, 0.0), // y axis
         Vec3::new(0.0, 0.0, 20.0), // z axis
+
+        // points
     ];
 
     #[rustfmt::skip]
@@ -206,7 +207,7 @@ pub fn main() {
                     };
                     cam.target = &cam.target + &(r * &ea);
                     cam.calc_up();
-                },
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
                     ..
@@ -251,28 +252,12 @@ pub fn main() {
             });
         debug!("");
 
-        // canvas
-        //     .fill_rect(Rect::new(
-        //         (size.0 / 2.0) as i32,
-        //         (size.1 / 2.0) as i32,
-        //         20,
-        //         20,
-        //     ))
-        //     .expect("Could not fill middle rect");
-        // canvas
-        //     .draw_line(
-        //         Point::new(size.0 as i32 / 2, 0),
-        //         Point::new(size.0 as i32 / 2, size.1 as i32),
-        //     )
-        //     .unwrap();
-        // canvas
-        //     .draw_line(
-        //         Point::new(0, size.1 as i32 / 2),
-        //         Point::new(size.0 as i32, size.1 as i32 / 2),
-        //     )
-        //     .unwrap();
-        canvas.set_draw_color(Color::WHITE);
 
+        canvas.set_draw_color(Color::RED);
+        let point = get_projected(&cam, &cam.target, size);
+        canvas.fill_rect(Rect::new(point.x, point.y, 5, 5));
+
+        canvas.set_draw_color(Color::WHITE);
         canvas.present();
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
@@ -399,12 +384,9 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
 
     // später so dass at auf 0,0,0 und eye auf z achse und up=(0,1,0) und dacnn in Mittlepunkt geschoben/gedreht wird
 
+    // verschiebe so, dass die camera eye auf 0,0,0
     point = &point - &cam_pos_new;
-    cam_pos_new = -&cam_pos_new;
-    let near_z = cam_pos_new.z - cam.near;
-    let depth_z = near_z + depth / 2.0;
-
-    point.z += -depth_z;
+    cam_pos_new = vec3::ZERO;
 
     // now everything from -1 to 1
 
@@ -412,7 +394,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     point.y = point.y / height;
     point.z = point.z / depth;
 
-    // now convert form [-1;1] to [0;1]
+    // now convert from [-1;1] to [0;1]
 
     point.x = (point.x + 1.0) / 2.0;
     point.y = (-point.y + 1.0) / 2.0;
@@ -426,6 +408,6 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     // (0, 0).into()
 }
 
-fn to_gradient(rad: f32) -> f32 {
+fn to_grad(rad: f32) -> f32 {
     180.0 * rad / std::f32::consts::PI
 }
