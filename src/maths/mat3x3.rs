@@ -2,6 +2,48 @@ use std::ops::Mul;
 
 use super::vec3::Vec3;
 
+pub fn get_rot_z(alpha: f32) -> Matrix3x3 {
+    Matrix3x3::new(
+        alpha.cos(),
+        -(alpha.sin()),
+        0.0,
+        alpha.sin(),
+        alpha.cos(),
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
+}
+
+pub fn get_rot_x(alpha: f32) -> Matrix3x3 {
+    Matrix3x3::new(
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        alpha.cos(),
+        -(alpha.sin()),
+        0.0,
+        alpha.sin(),
+        alpha.cos(),
+    )
+}
+
+pub fn get_rot_y(alpha: f32) -> Matrix3x3 {
+    Matrix3x3::new(
+        alpha.cos(),
+        0.0,
+        alpha.sin(),
+        0.0,
+        1.0,
+        0.0,
+        -(alpha.sin()),
+        0.0,
+        alpha.cos(),
+    )
+}
+
 pub struct Matrix3x3 {
     w11: f32,
     w12: f32,

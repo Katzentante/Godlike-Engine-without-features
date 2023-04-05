@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use config::{Config, FileFormat};
 use log::{debug, error, info};
-use maths::mat3x3::Matrix3x3;
+use maths::mat3x3::{Matrix3x3, get_rot_x, get_rot_y};
 use sdl2::event::{Event, WindowEvent};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -14,8 +14,9 @@ mod camera;
 mod maths;
 
 use maths::vec3::{self, Vec3, IDENTITY_Y};
+use maths::mat3x3::get_rot_z;
 
-use crate::camera::camera::PerspectiveCamera;
+use camera::camera::PerspectiveCamera;
 
 // use log::{debug, error, log_enabled, info, Level};
 
@@ -35,19 +36,6 @@ struct GameConfig {
 const SPEED: f32 = 0.33333;
 const WINKEL_SPEED: f32 = 0.1;
 
-fn get_rot_z(alpha: f32) -> Matrix3x3 {
-    Matrix3x3::new(
-        alpha.cos(),
-        -(alpha.sin()),
-        0.0,
-        alpha.sin(),
-        alpha.cos(),
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-    )
-}
 
 pub fn main() {
     // std::env::set_var("RUST_LOG", "error,warn,info,debug,trace");
@@ -284,17 +272,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     } else {
         -((cam_pos_new.x / cam_pos_new.z).atan())
     };
-    let rot_y = Matrix3x3::new(
-        alphay.cos(),
-        0.0,
-        alphay.sin(),
-        0.0,
-        1.0,
-        0.0,
-        -(alphay.sin()),
-        0.0,
-        alphay.cos(),
-    );
+    let rot_y = get_rot_y(alphay);
     point = &rot_y * &point;
     cam_pos_new = &rot_y * &cam_pos_new;
     up_pos = &rot_y * &up_pos;
@@ -307,17 +285,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
     } else {
         (cam_pos_new.y / cam_pos_new.z).atan()
     };
-    let rot_x = Matrix3x3::new(
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        alphax.cos(),
-        -(alphax.sin()),
-        0.0,
-        alphax.sin(),
-        alphax.cos(),
-    );
+    let rot_x = get_rot_x(alphax);
     point = &rot_x * &point;
     cam_pos_new = &rot_x * &cam_pos_new;
     up_pos = &rot_x * &up_pos;
@@ -344,17 +312,7 @@ fn get_projected(cam: &PerspectiveCamera, original: &Vec3, window_size: (f32, f3
             -alpha
         }
     };
-    let rot_z = Matrix3x3::new(
-        alphaz.cos(),
-        -(alphaz.sin()),
-        0.0,
-        alphaz.sin(),
-        alphaz.cos(),
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-    );
+    let rot_z = get_rot_z(alphaz);
     point = &rot_z * &point;
     cam_pos_new = &rot_z * &cam_pos_new;
 
