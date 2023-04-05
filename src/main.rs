@@ -35,6 +35,20 @@ struct GameConfig {
 const SPEED: f32 = 0.33333;
 const WINKEL_SPEED: f32 = 0.1;
 
+fn get_rot_z(alpha: f32) -> Matrix3x3 {
+    Matrix3x3::new(
+        alpha.cos(),
+        -(alpha.sin()),
+        0.0,
+        alpha.sin(),
+        alpha.cos(),
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
+}
+
 pub fn main() {
     // std::env::set_var("RUST_LOG", "error,warn,info,debug,trace");
     // std::env::set_var("RUST_LOG", "info,debug");
@@ -161,36 +175,14 @@ pub fn main() {
                     ..
                 } => {
                     let alphaz: f32 = WINKEL_SPEED;
-                    let rot_z = Matrix3x3::new(
-                        alphaz.cos(),
-                        -(alphaz.sin()),
-                        0.0,
-                        alphaz.sin(),
-                        alphaz.cos(),
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                    );
-                    cam.set_pos(&(rot_z * &cam.pos));
+                    cam.set_pos(&get_rot_z(alphaz) * &cam.pos);
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
                     ..
                 } => {
                     let alphaz: f32 = -WINKEL_SPEED;
-                    let rot_z = Matrix3x3::new(
-                        alphaz.cos(),
-                        -(alphaz.sin()),
-                        0.0,
-                        alphaz.sin(),
-                        alphaz.cos(),
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                    );
-                    cam.set_pos(&(rot_z * &cam.pos));
+                    cam.set_pos(&get_rot_z(alphaz) * &cam.pos);
                 }
                 // FIXME does not work because if ea is 0,0,0 kaputt
                 Event::KeyDown {
@@ -203,7 +195,7 @@ pub fn main() {
                     } else {
                         1.0 - SPEED
                     };
-                    cam.set_target(&(cam.target + &(r * &ea)))
+                    cam.set_target(&cam.target + &(r * &ea));
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
@@ -215,7 +207,7 @@ pub fn main() {
                     } else {
                         1.0 + SPEED
                     };
-                    cam.set_target(&(&cam.target + &(r * &ea)));
+                    cam.set_target(&cam.target + &(r * &ea));
                 }
 
                 _ => {}

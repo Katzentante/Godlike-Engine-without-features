@@ -30,12 +30,12 @@ impl PerspectiveCamera {
         }
     }
 
-    pub fn set_target(&mut self, target: &Vec3) {
+    pub fn set_target(&mut self, target: Vec3) {
         self.target = target;
         self.calc_up();
     }
 
-    pub fn set_pos(&mut self, pos: &Vec3) {
+    pub fn set_pos(&mut self, pos: Vec3) {
         self.pos = pos;
         self.calc_up();
     }
