@@ -51,3 +51,21 @@ impl Mul<&Vec3> for &Matrix3x3 {
         }
     }
 }
+
+impl Mul for &Matrix3x3 {
+    type Output = Matrix3x3;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Matrix3x3 {
+            w11: self.w11 * rhs.w11 + self.w12 * rhs.w21 + self.w13 * rhs.w31,
+            w12: self.w11 * rhs.w12 + self.w12 * rhs.w22 + self.w13 * rhs.w32,
+            w13: self.w11 * rhs.w13 + self.w12 * rhs.w23 + self.w13 * rhs.w33,
+            w21: self.w21 * rhs.w11 + self.w22 * rhs.w21 + self.w23 * rhs.w31,
+            w22: self.w21 * rhs.w12 + self.w22 * rhs.w22 + self.w23 * rhs.w32,
+            w23: self.w21 * rhs.w13 + self.w22 * rhs.w23 + self.w23 * rhs.w33,
+            w31: self.w31 * rhs.w11 + self.w32 * rhs.w21 + self.w33 * rhs.w31,
+            w32: self.w31 * rhs.w12 + self.w32 * rhs.w22 + self.w33 * rhs.w32,
+            w33: self.w31 * rhs.w13 + self.w32 * rhs.w23 + self.w33 * rhs.w33,
+        }
+    }
+}
